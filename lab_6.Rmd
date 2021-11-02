@@ -1,0 +1,130 @@
+---
+title: "lab_6"
+author: "Cristina"
+date: "11/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(palmerpenguins)
+library(broom)
+library(equatiomatic)
+```
+
+## Rank Based test example 
+Mann-Whitney U (non-parametric alternative to an unpaired 2-sample t-test)
+Comparison of ranks between two groups! 
+
+H0: Equal ranks (or medians)
+HA: These are drawn from population where ranks are not equal or medians are not equal 
+
+### Create our mock samples 
+
+set.seed() to create pseudorandom but reproducible samples 
+
+```{r}
+set.seed(1414)
+gp_1 <- sample.int(20, size = 15, replace = TRUE)
+gp_1
+
+set.seed(1424)
+
+gp_2 <- sample.int(30, size =15, replace =TRUE)
+gp_2
+```
+Take a quick look at the distribution using hist()
+
+```{r}
+hist(gp_1)
+hist(gp_2)
+```
+
+
+Try a t-test to compare the results: 
+
+```{r}
+ttest <- t.test(gp_1, gp_2)
+
+ttest
+
+#If these data were paired, I can just add the argument 'paired = TRUE' within the t.test() function.
+```
+
+
+
+The p-value means: this p-value means that if our samples are drawn from populations with the same mean, (if the H0 is true) there is a `r round(ttest$p.value, 2)` probability of finding sample means *at least as different as mine* by random chance. 
+
+
+A more comprehensive explanation of difference between groups...actually means, data spread, effect size.. there is no significant difference (t(df) = t.statistic value, p = x). 
+
+
+#### Mann Whitney U rank based test 
+
+We will use the wilcox.test()function to perform a two-sample rank-based test. 
+
+```{r}
+mwu <- wilcox.test(gp_1, gp_2)
+mwu
+```
+This p-value means that if our samples are drawn from population with the ame median. there is a 28% chance of finding a sample medians at least as different as ours by random chance. 
+
+No significant difference in medians (Mann-Whitney U; `r mwu$statistic`, p = `r round(mwu$p.value, 2)`) 
+
+The medians of group a (M=x) and group b (M= x) did not differ significantly (Mean WHitney U....) 
+
+## Simple linear regression 
+
+Two continuous quantitative variables that you are trying to understand the relationship between, and you think that a linear relationship makes sense. 
+
+Use the pengins data from palmer penguins, exploring flipper length (x) vs body mass (y). 
+
+```{r}
+# use view(penguins) to look at dataset
+# Make an exploratory scatterplot of peguin flipper length (x) vs body mass (y)
+
+ggplot(data = penguins, aes(x=flipper_length_mm, y = body_mass_g))+
+  geom_point() +
+  geom_smooth(method = "lm") # ADD A TRENDLINE 
+
+# looking at the graph, does it makes sense to use a linear regression? does it look like it could follow a linear pattern? 
+
+
+```
+### Find the model estimates for coefficients 
+
+```{r}
+# Use the 'lm()' for linear model. 
+#using model notation
+
+penguin_lm <- lm(body_mass_g ~ flipper_length_mm, data = penguins)
+```
+
+model coefficients: `r penguin_lm$coefficients`
+flipper length coefficient: `r penguin_lm$coefficients[2]`
+
+
+### broom tidy to get a tidy outpur from lm()
+
+```{r}
+penguin_lm_tidy <- tidy(penguin_lm)
+
+penguin_lm_tidy
+```
+
+### Use broom:: glance() to get output of model fit & statistical -- instead of working with lists, you can work with a table 
+
+```{r}
+penguin_lm_glance <- glance(penguin_lm)
+
+penguin_lm_tidy
+
+penguin_lm_tidy$estimate[2]
+```
+### Use equatiomatic:: extract_eq() to return the model in LaTex formula notation. 
+
+```{r}
+extract_eq(model = penguin_lm, use_coefs = TRUE)  # include actual coefficient values
+```
+
